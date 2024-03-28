@@ -28,37 +28,53 @@ const environment = {
 const nhtsaS3Bucket = 'nhtsa-db-backups';
 
 export async function handler(event) {
-  const downloadPath = await getLatestNhtsaFilePath(environment.nhtsa_host);
 
-  const fileName = downloadPath.split('/').slice(-1)[0].replace('.zip', '');
+  try {
 
-  const latestBakFile = await getBakFileFromNhtsa(downloadPath);
-  const isOnS3 = await isFileOnS3(environment, nhtsaS3Bucket, fileName);
+    const downloadPath = await getLatestNhtsaFilePath(environment.nhtsa_host);
 
-  if (latestBakFile.found && !isOnS3) {
-    try {
-      await urlToS3({
-        environment,
-        url: latestBakFile.url,
-        bucket: nhtsaS3Bucket,
-        key: fileName
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    const fileName = downloadPath.split('/').slice(-1)[0].replace('.zip', '');
+
+    const latestBakFile = await getBakFileFromNhtsa(downloadPath);
+    const isOnS3 = await isFileOnS3(environment, nhtsaS3Bucket, fileName);
+
+    let response = {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'No new file found' }),
+    };
+
+    if (latestBakFile.found && !isOnS3) {
+      try {
+        await urlToS3({
+          environment,
+          url: latestBakFile.url,
+          bucket: nhtsaS3Bucket,
+          key: fileName
+        });
+      } catch (e) {
+        console.log(e);
+      }
+
+      // Restore db now
+      const msSqlPool = await getMsSqlPool(environment);
+
+      await dropDatabase(msSqlPool);
+
+      const result = await restoreDatabase(msSqlPool, fileName);
+
+      response.body = JSON.stringify(result)
+    };
+
+    return response;
+  } catch (e) {
+    console.log(e);
+
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Error occurred' }),
+    };
+  } finally {
+    msSqlPool.close();
   }
 
-  // Restore db now
-  const msSqlPool = await getMsSqlPool(environment);
-
-  await dropDatabase(msSqlPool);
-
-  const result = await restoreDatabase(msSqlPool, fileName);
-
-  // TODO implement
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify(result),
-  };
-  return response;
 };
