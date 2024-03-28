@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Parameters:
+  environment:
+    Type: "String"
+    Default: "Development"
+
+Resources:
+  NhtsaDbUpdater:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Check NHTSA website for a new db version and restores our database with it
+      CodeUri: ./
+      Runtime: nodejs16.x
+      Handler: index.handler
+      Timeout: 900
+      MemorySize: 512
+      Environment:
+        Variables:
+          CurrentEnvironment: !Ref environment

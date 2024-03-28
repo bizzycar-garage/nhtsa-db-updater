@@ -1,0 +1,17 @@
+{
+  "type": "module",
+  "dependencies": {
+    "aws-sdk": "^2.1229.0",
+    "axios": "^1.0.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.3",
+    "mssql": "^9.0.1",
+    "unzipper": "^0.10.11"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./test/start.js",
+    "build": "zip -r ../nhtsaDbUpdater.zip *",
+    "deploy": "sam deploy --config-env Production"
+  }
+}
