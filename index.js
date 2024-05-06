@@ -29,6 +29,8 @@ const nhtsaS3Bucket = 'nhtsa-db-backups';
 
 export async function handler(event) {
 
+  let msSqlPool;
+
   try {
 
     const downloadPath = await getLatestNhtsaFilePath(environment.nhtsa_host);
@@ -56,7 +58,7 @@ export async function handler(event) {
       }
 
       // Restore db now
-      const msSqlPool = await getMsSqlPool(environment);
+      msSqlPool = await getMsSqlPool(environment);
 
       await dropDatabase(msSqlPool);
 
@@ -74,7 +76,9 @@ export async function handler(event) {
       body: JSON.stringify({ message: 'Error occurred' }),
     };
   } finally {
-    msSqlPool.close();
+    if (msSqlPool) {
+      msSqlPool.end();
+    }
   }
 
 };
