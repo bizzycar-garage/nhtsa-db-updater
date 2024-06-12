@@ -11,7 +11,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./test/start.js",
-    "build": "zip -r ../nhtsaDbUpdater.zip *",
+    "build": "zip -r ./nhtsaDbUpdater.zip *",
     "deploy": "sam deploy --config-env Production"
   }
 }
